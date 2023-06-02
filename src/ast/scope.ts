@@ -126,7 +126,9 @@ export function findAncestorThatCanHaveVariableDeclaration<T extends t.Node>(
 ): SelectablePath<T> | null {
   if (path === null) return null;
   if (isSelectablePath(path)) {
+    // @ts-expect-error Not sure how to solve, looks like a typedef issue
     if (path.isProgram()) return path;
+    // @ts-expect-error Not sure how to solve, looks like a typedef issue
     if (path.isStatement() && !path.isBlockStatement()) return path;
   }
 
@@ -136,6 +138,34 @@ export function findAncestorThatCanHaveVariableDeclaration<T extends t.Node>(
 
 export function bindingNamesInScope<T>(path: NodePath<T>): string[] {
   return Object.keys(path.scope.getAllBindings());
+}
+
+export function selectableReferencesInScope(
+  path: NodePath<t.Identifier>
+): SelectablePath[] {
+  const bindings = path.scope.getAllBindings() as Record<string, Binding>;
+  const pathBinding = bindings[path.node.name] as Binding | undefined;
+  if (!pathBinding) return [];
+
+  const referencePaths = [pathBinding.path, ...pathBinding.referencePaths];
+  // May be fragile to get the exact grand-grand-parent path…
+  // But it passes the tests so far!
+  pathBinding.path.parentPath?.parentPath?.traverse({
+    Identifier(childPath) {
+      if (childPath.node.name !== path.node.name) return;
+      // We already counted the refs
+      if (t.isReferenced(childPath.node, childPath.parent)) return;
+      if (t.isDeclaration(childPath.parent)) return;
+      if (t.isPattern(childPath.parent)) return;
+      if (t.isMemberExpression(childPath.parent)) return;
+
+      referencePaths.push(childPath);
+    }
+  });
+
+  return referencePaths
+    .filter((path) => t.isIdentifier(path))
+    .filter(isSelectablePath);
 }
 
 export function referencesInScope(

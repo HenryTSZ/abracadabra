@@ -100,7 +100,8 @@
       "profile": "http://www.lyreal666.com/",
       "contributions": [
         "bug",
-        "infra"
+        "infra",
+        "code"
       ]
     },
     {
@@ -323,7 +324,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/55899582?v=4",
       "profile": "https://github.com/j4k0xb",
       "contributions": [
-        "bug"
+        "bug",
+        "code"
       ]
     },
     {
@@ -466,6 +468,87 @@
       "contributions": [
         "ideas",
         "code"
+      ]
+    },
+    {
+      "login": "ramunsk",
+      "name": "Ramunas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/514899?v=4",
+      "profile": "https://github.com/ramunsk",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "yume-chan",
+      "name": "Simon Chan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1330321?v=4",
+      "profile": "https://github.com/yume-chan",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "byronwall",
+      "name": "byron wall",
+      "avatar_url": "https://avatars.githubusercontent.com/u/495404?v=4",
+      "profile": "http://byroni.us",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "jerone",
+      "name": "Jeroen van Warmerdam",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55841?v=4",
+      "profile": "https://github.com/jerone",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "stevebeauge",
+      "name": "Steve Beaugé",
+      "avatar_url": "https://avatars.githubusercontent.com/u/184604?v=4",
+      "profile": "http://blog.hand-net.com",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "SamB",
+      "name": "Samuel Bronson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13903?v=4",
+      "profile": "https://github.com/SamB",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "DerTimonius",
+      "name": "Timon Jurschitsch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/103483059?v=4",
+      "profile": "https://www.linkedin.com/in/timonjurschitsch/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "leodr",
+      "name": "Leo Driesch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39763575?v=4",
+      "profile": "http://dribbble.com/leodriesch",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "pomeh",
+      "name": "Romain Guerin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/285534?v=4",
+      "profile": "http://about.me/romainguerin",
+      "contributions": [
+        "bug"
       ]
     }
   ],

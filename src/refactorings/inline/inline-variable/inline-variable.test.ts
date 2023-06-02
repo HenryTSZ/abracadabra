@@ -1,5 +1,5 @@
-import { Code, ErrorReason } from "../../../editor/editor";
 import { InMemoryEditor } from "../../../editor/adapters/in-memory-editor";
+import { Code, ErrorReason } from "../../../editor/editor";
 import { testEach } from "../../../tests-helpers";
 
 import { inlineVariable } from "./inline-variable";
@@ -243,6 +243,16 @@ const page = <div>{header}</div>;`,
         expected: `const page = <div><h1>Hello</h1></div>;`
       },
       {
+        description: "a JSX element into a JSX attribute",
+        code: `function MyComponent() {
+  const header[cursor] = <span>hello</span>;
+  return <Menu header={header} />
+}`,
+        expected: `function MyComponent() {
+  return <Menu header={<span>hello</span>} />
+}`
+      },
+      {
         description: "a multi-lines JSX element into another",
         code: `const header[cursor] = (
   <h1>Hello</h1>
@@ -277,6 +287,28 @@ console.log(\`Hello \${name}\`);`,
         expected: `console.log(\`Hello world!
 
 How are you doing?\`);`
+      },
+      {
+        description: "with the satisfies operator",
+        code: `[start]const foo = "bar";[end]
+const hello = "World!";
+console.log(foo satisfies string);`,
+        expected: `const hello = "World!";
+console.log("bar" satisfies string);`
+      },
+      {
+        description: "a variable declaration that is an async arrow expression",
+        code: `const foo[cursor] = async (a: number) => {
+  console.log(a);
+};
+const bar = async () => {
+  await foo(3);
+};`,
+        expected: `const bar = async () => {
+  await (async (a: number) => {
+  console.log(a);
+})(3);
+};`
       }
     ],
     async ({ code, expected }) => {

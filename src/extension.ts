@@ -1,38 +1,41 @@
 import * as vscode from "vscode";
 
-import { createCommand } from "./commands";
 import { RefactoringActionProvider } from "./action-providers";
-import { Refactoring, RefactoringWithActionProvider } from "./types";
-
+import { createCommand } from "./commands";
+import { VSCodeEditor } from "./editor/adapters/vscode-editor";
+import refreshHighlights from "./highlights/refresh-highlights";
+import removeAllHighlights from "./highlights/remove-all-highlights";
+import toggleHighlight from "./highlights/toggle-highlight";
 import addNumericSeparator from "./refactorings/add-numeric-separator";
 import changeSignature from "./refactorings/change-signature";
-import convertForToForEach from "./refactorings/convert-for-to-for-each";
 import convertForEachToForOf from "./refactorings/convert-for-each-to-for-of";
+import convertForToForEach from "./refactorings/convert-for-to-for-each";
 import convertIfElseToSwitch from "./refactorings/convert-if-else-to-switch";
-import convertSwitchToIfElse from "./refactorings/convert-switch-to-if-else";
 import convertIfElseToTernary from "./refactorings/convert-if-else-to-ternary";
+import convertLetToConst from "./refactorings/convert-let-to-const";
+import convertSwitchToIfElse from "./refactorings/convert-switch-to-if-else";
 import convertTernaryToIfElse from "./refactorings/convert-ternary-to-if-else";
 import convertToArrowFunction from "./refactorings/convert-to-arrow-function";
 import convertToTemplateLiteral from "./refactorings/convert-to-template-literal";
-import convertLetToConst from "./refactorings/convert-let-to-const";
 import createFactoryForConstructor from "./refactorings/create-factory-for-constructor";
 import destructureObject from "./refactorings/destructure-object";
 import extract from "./refactorings/extract";
 import extractGenericType from "./refactorings/extract-generic-type";
 import extractInterface from "./refactorings/extract-interface";
 import flipIfElse from "./refactorings/flip-if-else";
+import flipOperator from "./refactorings/flip-operator";
 import flipTernary from "./refactorings/flip-ternary";
 import inline from "./refactorings/inline";
+import invertBooleanLogic from "./refactorings/invert-boolean-logic";
 import liftUpConditional from "./refactorings/lift-up-conditional";
 import mergeIfStatements from "./refactorings/merge-if-statements";
 import mergeWithPreviousIfStatement from "./refactorings/merge-with-previous-if-statement";
 import moveStatementDown from "./refactorings/move-statement-down";
 import moveStatementUp from "./refactorings/move-statement-up";
 import moveToExistingFile from "./refactorings/move-to-existing-file";
-import invertBooleanLogic from "./refactorings/invert-boolean-logic";
-import reactConvertToPureComponent from "./refactorings/react/convert-to-pure-component";
 import reactExtractUseCallback from "./refactorings/react/extract-use-callback";
 import removeDeadCode from "./refactorings/remove-dead-code";
+import removeJsxFragment from "./refactorings/remove-jsx-fragment";
 import removeRedundantElse from "./refactorings/remove-redundant-else";
 import renameSymbol from "./refactorings/rename-symbol";
 import replaceBinaryWithAssignment from "./refactorings/replace-binary-with-assignment";
@@ -41,10 +44,8 @@ import splitDeclarationAndInitialization from "./refactorings/split-declaration-
 import splitIfStatement from "./refactorings/split-if-statement";
 import splitMultipleDeclarations from "./refactorings/split-multiple-declarations";
 import toggleBraces from "./refactorings/toggle-braces";
-// REFACTOR: this refactoring wasn't implemented following the usual pattern. See https://github.com/nicoespeon/abracadabra/issues/180
-import { ExtractClassActionProvider } from "./refactorings/extract-class/extract-class-action-provider";
-import { ExtractClassCommand } from "./refactorings/extract-class/extract-class-command";
-import { ABRACADABRA_EXTRACT_CLASS_COMMAND } from "./refactorings/extract-class/EXTRACT_CLASS_COMMAND";
+import wrapInJsxFrament from "./refactorings/wrap-in-jsx-fragment";
+import { Refactoring, RefactoringWithActionProvider } from "./types";
 
 const refactorings: { [key: string]: ConfiguredRefactoring } = {
   typescriptOnly: {
@@ -54,8 +55,12 @@ const refactorings: { [key: string]: ConfiguredRefactoring } = {
   },
   reactOnly: {
     languages: ["javascriptreact", "typescriptreact"],
-    withoutActionProvider: [reactConvertToPureComponent],
-    withActionProvider: [reactExtractUseCallback]
+    withoutActionProvider: [],
+    withActionProvider: [
+      reactExtractUseCallback,
+      wrapInJsxFrament,
+      removeJsxFragment
+    ]
   },
   allButVueAndSvelte: {
     languages: [
@@ -98,6 +103,7 @@ const refactorings: { [key: string]: ConfiguredRefactoring } = {
       createFactoryForConstructor,
       flipIfElse,
       flipTernary,
+      flipOperator,
       inline,
       liftUpConditional,
       mergeIfStatements,
@@ -128,20 +134,21 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  Object.values(refactorings).forEach(
-    ({ withoutActionProvider, withActionProvider }) => {
-      withoutActionProvider
-        .concat(withActionProvider)
-        .forEach(({ command }) =>
-          context.subscriptions.push(
-            vscode.commands.registerCommand(
-              `abracadabra.${command.key}`,
-              createCommand(command.operation)
-            )
-          )
-        );
-    }
+  const commands = Object.values(refactorings).flatMap(
+    ({ withoutActionProvider, withActionProvider }) =>
+      withoutActionProvider.concat(withActionProvider)
   );
+
+  commands
+    .concat([toggleHighlight, refreshHighlights, removeAllHighlights])
+    .forEach(({ command }) => {
+      context.subscriptions.push(
+        vscode.commands.registerCommand(
+          `abracadabra.${command.key}`,
+          createCommand(command.operation)
+        )
+      );
+    });
 
   const withActionProviderPerLanguage = Object.values(refactorings).reduce(
     (memo, { languages, withActionProvider }) => {
@@ -167,19 +174,22 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(
-    vscode.commands.registerTextEditorCommand(
-      ABRACADABRA_EXTRACT_CLASS_COMMAND,
-      ExtractClassCommand.execute
-    )
-  );
+  vscode.window.onDidChangeActiveTextEditor((editor) => {
+    if (!editor) return;
+    VSCodeEditor.restoreHighlightDecorations(editor);
+  });
 
-  refactorings.allLanguages.languages.forEach((language) => {
-    vscode.languages.registerCodeActionsProvider(
-      language,
-      new ExtractClassActionProvider(),
-      { providedCodeActionKinds: [vscode.CodeActionKind.RefactorExtract] }
-    );
+  vscode.workspace.onWillRenameFiles((event) => {
+    VSCodeEditor.renameHighlightsFilePath(event);
+  });
+
+  vscode.workspace.onDidChangeTextDocument((event) => {
+    VSCodeEditor.repositionHighlights(event);
+
+    const activeTextEditor = vscode.window.activeTextEditor;
+    if (activeTextEditor) {
+      VSCodeEditor.restoreHighlightDecorations(activeTextEditor);
+    }
   });
 }
 

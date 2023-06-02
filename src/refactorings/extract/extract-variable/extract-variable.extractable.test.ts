@@ -1,5 +1,5 @@
-import { Code } from "../../../editor/editor";
 import { InMemoryEditor } from "../../../editor/adapters/in-memory-editor";
+import { Code } from "../../../editor/editor";
 import { testEach } from "../../../tests-helpers";
 
 import { extractVariable } from "./extract-variable";
@@ -529,6 +529,41 @@ for (var i = 0; i < items.length; i++) {}`
         expected: `function addNumbers(arr: number[]): number {
   const extracted = arr.reduce((sum, current) => sum + current, 0);
   return extracted;
+}`
+      },
+      {
+        description: "expression bound to a variable",
+        code: `const a = 1;
+console.log(a);
+console.log([start]a + 1[end]);
+console.log(a + 1);`,
+        expected: `const a = 1;
+const extracted = a + 1;
+console.log(a);
+console.log(extracted);
+console.log(extracted);`
+      },
+      {
+        description: "expression bound to a variable, nested in statements",
+        code: `function updateQuality() {
+  for (var i = 0; i < items.length; i++) {
+    if ([start]items[i][end].name != "SULFURAS") {
+      items[i].sellIn = items[i].sellIn - 1;
+    }
+  }
+
+  return items;
+}`,
+        // The declared variable isn't indented, but at least it doesn't mess up with the next line (if statement).
+        expected: `function updateQuality() {
+  for (var i = 0; i < items.length; i++) {
+const extracted = items[i];
+    if (extracted.name != "SULFURAS") {
+      extracted.sellIn = extracted.sellIn - 1;
+    }
+  }
+
+  return items;
 }`
       }
     ],

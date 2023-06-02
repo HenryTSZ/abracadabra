@@ -1,7 +1,9 @@
 import * as t from "../../ast";
+import { isSelectablePath, parse } from "../../ast";
 import { isFunctionDeclarationOrArrowFunction } from "../../ast/identity";
 import { Editor, ErrorReason, SelectedPosition } from "../../editor/editor";
 import { Path } from "../../editor/path";
+import { Position } from "../../editor/position";
 import { Selection } from "../../editor/selection";
 
 export async function changeSignature(editor: Editor) {
@@ -111,29 +113,52 @@ function updateCode(
       const node = path.node;
 
       if (t.isCallExpression(node)) {
-        const args = node.arguments.slice();
+        const args = node.arguments.slice().filter((_param, index) => {
+          return !hasRemovedTheParameter(newPositions[index]);
+        });
+
         if (args.length) {
           newPositions.forEach((order) => {
-            const arg = node.arguments[order.value.startAt];
-            args[order.value.endAt] = arg;
+            if (isNewParameter(order)) {
+              // Convert to a valid code.
+              // Without that will trigger invalid "Missing semicolon (n, n)"
+              // That error occurs only for literal objects like: {id: 1, ...}
+              const fakedBlockCode = `const faked = ${order.value.val}`;
+              const parsed = parse(fakedBlockCode);
+              const node = parsed.program.body[0];
+
+              if (t.isVariableDeclaration(node)) {
+                const variableDeclarator = node.declarations[0];
+                if (variableDeclarator.init) {
+                  args[order.value.endAt] = variableDeclarator.init;
+                }
+              }
+            } else {
+              args[order.value.endAt] = node.arguments[order.value.startAt];
+            }
           });
         }
 
-        const newArgs = args.map((arg) => {
+        node.arguments = args.map((arg) => {
           if (arg) return arg;
 
           return t.identifier("undefined");
         });
-        node.arguments = newArgs;
       } else if (
         isFunctionDeclarationOrArrowFunction(node) ||
         t.isClassMethod(node)
       ) {
-        const params = node.params.slice();
+        const params = node.params.slice().filter((_param, index) => {
+          return !hasRemovedTheParameter(newPositions[index]);
+        });
+
         if (params.length) {
           newPositions.forEach((order) => {
-            const arg = node.params[order.value.startAt];
-            params[order.value.endAt] = arg;
+            if (isNewParameter(order)) {
+              params[order.value.endAt] = t.identifier(order.label);
+            } else {
+              params[order.value.endAt] = node.params[order.value.startAt];
+            }
           });
         }
 
@@ -157,20 +182,22 @@ export function createVisitor(
   return {
     FunctionDeclaration(path) {
       if (!selection.isInsidePath(path)) return;
+      if (!hasParameters(path.node)) return;
 
       onMatch(path, selection);
     },
     ArrowFunctionExpression(path) {
       if (!selection.isInsidePath(path)) return;
-
+      if (!hasParameters(path.node)) return;
       if (!t.isVariableDeclarator(path.parent)) return;
-
       if (!path.parent.loc) return;
 
       onMatch(path, Selection.fromAST(path.parent.loc));
     },
     ClassMethod(path) {
       if (!selection.isInsidePath(path)) return;
+      if (!hasParameters(path.node)) return;
+
       onMatch(path, selection);
     }
   };
@@ -227,27 +254,104 @@ function createVisitorForReferences(
 ): t.Visitor {
   return {
     CallExpression(path) {
-      const nodeSelection = new Selection(
-        [path.node.loc?.start.line || 0, 0],
-        [path.node.loc?.end.line || 0, 0]
-      );
+      if (!isSelectablePath(path)) return;
 
-      if (!selection.isSameLineThan(nodeSelection)) return;
+      // Since we visit nodes from parent to children, first check
+      // if a child would match the selection closer.
+      if (hasChildWhichMatchesSelection(path, selection)) return;
+
+      const start = Position.fromAST(path.node.loc.start).putAtStartOfLine();
+      const end = Position.fromAST(path.node.loc.end).putAtStartOfLine();
+      const nodeSelection = Selection.fromPositions(start, end);
+
+      if (!selection.start.isSameLineThan(nodeSelection.start)) return;
 
       onMatch(path);
     },
     FunctionDeclaration(path) {
       if (!selection.isInsidePath(path)) return;
+
+      // Since we visit nodes from parent to children, first check
+      // if a child would match the selection closer.
+      if (hasChildWhichMatchesSelection(path, selection)) return;
+
       onMatch(path);
     },
     ArrowFunctionExpression(path) {
-      if (!selection.isInsidePath(path)) return;
+      if (!selection.isInsidePath(path.parentPath)) return;
+
+      // Since we visit nodes from parent to children, first check
+      // if a child would match the selection closer.
+      if (hasChildWhichMatchesSelection(path, selection)) return;
 
       onMatch(path);
     },
     ClassMethod(path) {
       if (!selection.isInsidePath(path)) return;
+
+      // Since we visit nodes from parent to children, first check
+      // if a child would match the selection closer.
+      if (hasChildWhichMatchesSelection(path, selection)) return;
+
       onMatch(path);
     }
   };
+}
+
+function hasChildWhichMatchesSelection(
+  path: t.NodePath,
+  selection: Selection
+): boolean {
+  let result = false;
+
+  path.traverse({
+    CallExpression(childPath) {
+      if (!isSelectablePath(childPath)) return;
+
+      const start = Position.fromAST(
+        childPath.node.loc.start
+      ).putAtStartOfLine();
+      const end = Position.fromAST(childPath.node.loc.end).putAtStartOfLine();
+      const nodeSelection = Selection.fromPositions(start, end);
+
+      if (!selection.start.isSameLineThan(nodeSelection.start)) return;
+
+      result = true;
+      childPath.stop();
+    },
+    FunctionDeclaration(childPath) {
+      if (!selection.isInsidePath(childPath)) return;
+
+      result = true;
+      childPath.stop();
+    },
+    ArrowFunctionExpression(childPath) {
+      if (!selection.isInsidePath(childPath.parentPath)) return;
+
+      result = true;
+      childPath.stop();
+    },
+    ClassMethod(childPath) {
+      if (!selection.isInsidePath(childPath)) return;
+
+      result = true;
+      childPath.stop();
+    }
+  });
+
+  return result;
+}
+
+function hasParameters(
+  node: t.FunctionDeclaration | t.ArrowFunctionExpression | t.ClassMethod
+) {
+  return node.params.length > 0;
+}
+
+function isNewParameter(order: SelectedPosition) {
+  return order.value.startAt === -1;
+}
+
+function hasRemovedTheParameter(order: SelectedPosition) {
+  return order.value.endAt === -1;
 }

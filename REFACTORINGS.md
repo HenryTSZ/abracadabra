@@ -29,6 +29,7 @@ Pro Tip: You can also disable the Quick Fixes you never use in [VS Code settings
   1. [Simplify Ternary](#simplify-ternary)
   1. [Flip If/Else](#flip-ifelse)
   1. [Flip Ternary](#flip-ternary)
+  1. [Flip Operator](#flip-operator)
   1. [Convert If/Else to Ternary](#convert-ifelse-to-ternary)
   1. [Convert Ternary to If/Else](#convert-ternary-to-ifelse)
   1. [Convert If/Else to Switch](#convert-ifelse-to-switch)
@@ -37,8 +38,6 @@ Pro Tip: You can also disable the Quick Fixes you never use in [VS Code settings
   1. [Merge If Statements](#merge-if-statements)
   1. [Merge With Previous If Statement](#merge-with-previous-if-statement)
   1. [Lift Up Conditional](#lift-up-conditional)
-- Encapsulation:
-  1. [Extract Class](#extract-class)
 - Moving Features:
   1. [Move to Existing File](#move-to-existing-file)
   1. [Remove Dead Code](#remove-dead-code)
@@ -60,8 +59,9 @@ Pro Tip: You can also disable the Quick Fixes you never use in [VS Code settings
   1. [Extract Generic Type](#extract-generic-type)
   1. [Extract Interface](#extract-interface)
 - Specific to React:
-  1. [Convert to Pure Component](#convert-to-pure-component)
   1. [Extract useCallback()](#extract-usecallback)
+  1. [Wrap in JSX Fragment](#wrap-in-jsx-fragment)
+  1. [Remove JSX Fragment](#remove-jsx-fragment)
 
 ## The Essentials
 
@@ -145,7 +145,7 @@ This refactoring is similar to _Inline Variable_, but for functions. It replaces
 
 > 💡 Available as Quick Fix (`Alt ↵`)
 
-This refactoring allows you to change the order of a function parameters. It will resolve and update the references to that function.
+This refactoring allows you to add, remove, or change the order of a function parameters. It will resolve and update the references to that function.
 
 It supports function declarations, arrow functions, and class methods.
 
@@ -241,6 +241,16 @@ Flips a ternary statement. It's really similar to _Flip If/Else_ refactoring.
 
 [⬆️ Go to Table of Contents](#table-of-contents)
 
+### Flip Operator
+
+> 💡 Available as Quick Fix (`Alt ↵`)
+
+Flips the left and right side of an operator. Very handy to introduce [Yoda Conditions](https://en.wikipedia.org/wiki/Yoda_conditions) in the code.
+
+![][demo-flip-operator]
+
+[⬆️ Go to Table of Contents](#table-of-contents)
+
 ### Convert If/Else to Ternary
 
 > 💡 Available as Quick Fix (`Alt ↵`)
@@ -332,20 +342,6 @@ Useful when you need to have the similar conditionals at the top level. If you g
 Hocus, pocus… This refactoring takes care of the gymnastic for you! Resulting code will have the same behaviour.
 
 ![][demo-lift-up-conditional]
-
-[⬆️ Go to Table of Contents](#table-of-contents)
-
-## Encapsulation
-
-### Extract Class
-
-> 💡 Available as Quick Fix (`Alt ↵`)
-
-Often, classes grow too big and do too many things. You want to split them by extracting some behavior in a new class.
-
-This is where Abracadabra comes in and automate most of the grunt work for you. It can extract the properties and function you want in a keystrokes! It will take care of creating the new class while preserving existing behavior—it's a refactoring after all.
-
-![][demo-extract-class]
 
 [⬆️ Go to Table of Contents](#table-of-contents)
 
@@ -548,18 +544,6 @@ This is very useful when you need to invert a dependency: create an interface fr
 
 ## Specific to React
 
-### Convert to Pure Component
-
-> **Not** available as a Quick Fix, use the [Command Palette][command-palette] to run this one
-
-This one is specific to React and comes from [react codemod][react-codemod].
-
-It converts ES6 classes that only have a `render()` method, only have safe properties (statics and props), and do not have refs to Functional Components.
-
-![][demo-convert-to-pure-component]
-
-[⬆️ Go to Table of Contents](#table-of-contents)
-
 ### Extract useCallback()
 
 > 💡 Available as Quick Fix (`Alt ↵`)
@@ -572,6 +556,28 @@ _Note: it works in a web editor too (eg. https://github.dev/nicoespeon/abracadab
 
 [⬆️ Go to Table of Contents](#table-of-contents)
 
+### Wrap in JSX Fragment
+
+> 💡 Available as Quick Fix (`Alt ↵`)
+
+Handy when you need to add another JSX element next to the one you have, but keep a single root!
+
+![][demo-wrap-in-jsx-fragment]
+
+[⬆️ Go to Table of Contents](#table-of-contents)
+
+### Remove JSX Fragment
+
+> 💡 Available as Quick Fix (`Alt ↵`)
+
+Reverse operation of "Wrap in JSX Fragment". Useful when something is unnecessarily nested inside a fragment.
+
+It won't remove a fragment that's required though: only the ones that have a single child node.
+
+![][demo-remove-jsx-fragment]
+
+[⬆️ Go to Table of Contents](#table-of-contents)
+
 <!-- Links -->
 
 [command-palette]: https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette
@@ -581,7 +587,6 @@ _Note: it works in a web editor too (eg. https://github.dev/nicoespeon/abracadab
 [vscode-settings]: https://code.visualstudio.com/docs/getstarted/settings
 [replace-nested-conditional-with-guard-clauses]: https://refactoring.guru/replace-nested-conditional-with-guard-clauses
 [decompose-conditional]: https://refactoring.guru/decompose-conditional
-[react-codemod]: https://github.com/reactjs/react-codemod
 
 <!-- Demo images -->
 
@@ -599,6 +604,7 @@ _Note: it works in a web editor too (eg. https://github.dev/nicoespeon/abracadab
 [demo-remove-redundant-else]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/remove-redundant-else.gif?raw=true
 [demo-flip-if-else]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/flip-if-else.gif?raw=true
 [demo-flip-ternary]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/flip-ternary.gif?raw=true
+[demo-flip-operator]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/flip-operator.gif?raw=true
 [demo-add-numeric-separator]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/add-numeric-separator.gif?raw=true
 [demo-destructure-object]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/destructure-object.gif?raw=true
 [demo-convert-to-arrow-function]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/convert-to-arrow-function.gif?raw=true
@@ -626,12 +632,12 @@ _Note: it works in a web editor too (eg. https://github.dev/nicoespeon/abracadab
 [demo-create-factory-for-constructor]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/create-factory-for-constructor.gif?raw=true
 [demo-move-to-existing-file]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/move-to-existing-file.gif?raw=true
 [demo-remove-dead-code]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/remove-dead-code.gif?raw=true
-[demo-convert-to-pure-component]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/convert-to-pure-component.gif?raw=true
 [demo-simplify-ternary]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/simplify-ternary.gif?raw=true
 [demo-extract-interface]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/extract-interface.gif?raw=true
-[demo-extract-class]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/extract-class.gif?raw=true
 [demo-extract-use-callback]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/extract-use-callback.gif?raw=true
 [demo-toggle-braces]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/toggle-braces.gif?raw=true
+[demo-wrap-in-jsx-fragment]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/wrap-in-jsx-fragment.gif?raw=true
+[demo-remove-jsx-fragment]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/remove-jsx-fragment.gif?raw=true
 
 <!-- Logo -->
 

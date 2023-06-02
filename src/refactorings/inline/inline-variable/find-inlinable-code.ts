@@ -299,9 +299,11 @@ class InlinableIdentifier implements InlinableCode {
         self.identifiersToReplace.push({
           loc: node.loc,
           parent: parent.node,
+          grandParent: ancestors[ancestors.length - 2]?.node ?? null,
           shouldWrapInParenthesis:
             t.isUnaryExpression(parent.node) ||
-            (t.isTSAsExpression(self.init) && !parentHasParenthesis),
+            (t.isTSAsExpression(self.init) && !parentHasParenthesis) ||
+            (t.isFunction(self.init) && Boolean(self.init.async)),
           shorthandKey:
             t.isObjectProperty(parent.node) &&
             parent.node.shorthand &&
@@ -317,14 +319,22 @@ class InlinableIdentifier implements InlinableCode {
 class InlinableJSXElementIdentifier extends InlinableIdentifier {
   updateIdentifiersWith(inlinedCode: Code): Modification[] {
     return this.identifiersToReplace.map(
-      ({ parent, loc, shouldWrapInParenthesis, shorthandKey }) => ({
+      ({
+        parent,
+        grandParent,
+        loc,
+        shouldWrapInParenthesis,
+        shorthandKey
+      }) => ({
         code: shouldWrapInParenthesis
           ? `(${inlinedCode})`
           : shorthandKey
           ? `${shorthandKey}: ${inlinedCode}`
           : inlinedCode,
         selection:
-          t.isJSXExpressionContainer(parent) && t.isSelectableNode(parent)
+          t.isJSXExpressionContainer(parent) &&
+          !t.isJSXAttribute(grandParent) &&
+          t.isSelectableNode(parent)
             ? Selection.fromAST(parent.loc)
             : Selection.fromAST(loc)
       })
@@ -390,6 +400,7 @@ interface IdentifierToReplace {
   shouldWrapInParenthesis: boolean;
   shorthandKey: string | null;
   parent: t.Node;
+  grandParent: t.Node | null;
 }
 
 // 📦 Composites

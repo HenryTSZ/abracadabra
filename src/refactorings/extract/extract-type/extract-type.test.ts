@@ -1,9 +1,9 @@
-import { ErrorReason, Code, Command } from "../../../editor/editor";
 import { InMemoryEditor } from "../../../editor/adapters/in-memory-editor";
+import { Code, Command, ErrorReason } from "../../../editor/editor";
 import { testEach } from "../../../tests-helpers";
 
-import { extractType } from "./extract-type";
 import { Selection } from "../../../editor/selection";
+import { extractType } from "./extract-type";
 
 describe("Extract Type", () => {
   testEach<{ code: Code; expected: Code }>(

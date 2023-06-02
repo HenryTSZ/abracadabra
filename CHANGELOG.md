@@ -7,9 +7,140 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.1.1]
+
+### Fixed
+
+- Fix a scenario where extracting a variable could mess up with the code. Eg.
+
+```js
+function updateQuality() {
+  for (var i = 0; i < items.length; i++) {
+    // Extracting `items[i]` used to produce invalid code, not anymore!
+    if (items[i].name != "SULFURAS") {
+      items[i].sellIn = items[i].sellIn - 1;
+    }
+  }
+
+  return items;
+}
+```
+
+- Fix "Lift Up Conditional" when the parent if has an alternate node. The original specs were incorrect and have been fixed.
+
+```js
+// Lifting up `if (isCorrect)` used to produce invalid code, not anymore!
+if (isValid) {
+  if (isCorrect) {
+    doSomething();
+  }
+} else {
+  doAnotherThing();
+}
+```
+
+## [8.1.0] - 2023-05-19 - You’ll Be in My Heart 🌳
+
+### Fixed
+
+- "Change Signature" was not working on multi-line calls. Thanks to @pomeh, this has been fixed!
+
+### Added
+
+- **[New Refactoring]** "Remove JSX Fragment" thanks to @DerTimonius. This allows you to switch back and forth with "Wrap in JSX Fragment".
+
+## [8.0.1]
+
+No user-visible change. Mostly dependencies upgrades.
+
+## [8.0.0] - 2023-04-13 - Let It Go 🏔️
+
+### Breaking Changes
+
+The following refactorings were removed from Abracadabra (until re-implemented):
+
+- Extract Class
+- Convert to Pure Component (React)
+
+Why? There are causing trouble that aren't worth it ([see detailed ADR][adr-0013]).
+
+## [7.1.1]
+
+No user-visible change. Mostly dependencies upgrades.
+
+## [7.1.0] - 2023-04-13 - Two Worlds, One JSX 🌴
+
+### Fixed
+
+- Change Signature wasn't working on nested functions. It has been reported by @SamB and fixed!
+- Extract Variable may declare the new variable before another variable it references under some circumstances. These have been fixed. Kudos to @tjx666 for finding that!
+
+### Added
+
+- **[New Refactoring]** "Wrap in JSX Fragment" thanks to @DerTimonius. This will help you refactor JSX code to add more elements within a single root.
+
+## [7.0.0] - 2023-02-15 - Bella Note 🍝
+
+### Changed
+
+- **(Breaking)** Change Windows key bindings for the Toggle Highlight feature. It was hijacking the default shortcut to replace code on this OS, which is not cool. Thanks @stevebeauge for reporting.
+
+### Fixed
+
+- Inline Variable was producing invalid code when inlining an async arrow function expression. Not anymore! Thanks @automatensalat for reporting, as always 😉
+
+## [6.19.0] - 2023-02-03 - Let’s go Highlight an Identifier 🪁
+
+### Added
+
+- New feature to support refactorings: **Highlight Identifiers**. It can help you highlight all references to different variables.
+
+![][demo-toggle-highlights]
+
+### Changed
+
+- Generated interfaces now have a consistent `;` at the end of each line. This is a side-effect of upgrading Recast to solve [#795](https://github.com/nicoespeon/abracadabra/issues/795)
+
+### Fixed
+
+- Fixed a bug where parser would not handle comments within an object that uses the `satisfies` operator. Kudos to @byronwall for [the detailed report](https://github.com/nicoespeon/abracadabra/issues/795)!
+- Inlining JSX in a JSX attribute doesn't remove the curly braces anymore. Thanks @automatensalat for reporting.
+- Extracting a variable when cursor is on a JSX attribute name used to break the code. Now it will resolve the closest extractable chunk (the JSX Element). Thanks again @automatensalat for reporting.
+
+## [6.18.2]
+
+No user-visible change. Attempting to fix CI deployments.
+
+## [6.18.1]
+
+### Fixed
+
+- Upgrade the parser so it handles TS new `satisfies` operator syntax.
+
+### Changed
+
+- Activation of the extension is now delayed [after VS Code has fully started](https://code.visualstudio.com/api/references/activation-events#onStartupFinished). Thus, it won't slow down your editor startup since you probably don't need your refactorings right away—I bet you won't notice they load ~2s after your editor is up 😄
+
+## [6.18.0] - 2022-12-28 - He Mele No Refactoring 🏄
+
+### Added
+
+- 'Change Signature' now supports adding and removing parameters, thanks to @11joselu 🎉
+
+### Improved
+
+- Do not show 'Change Signature' quick fix when a function/method does _not_ have parameters (thanks @11joselu)
+
+### Fixed
+
+- Some refactorings were not preserving important parentheses, which could have introduced regressions (eg. "Flip If/Else"). Now they do just fine!
+
+## [6.17.0] - 2022-11-15 - What Else Can I Do? 🌼
+
 ### Added
 
 - **[New Refactoring]** "Change Signature" thanks to @11joselu's great work to find function references across files.
+- **[New Refactoring]** "Flip Operator" thanks to @ramunsk's idea of introducing "Yoda Conditions" and @j4k0xb implementation of it.
 
 ### Fixed
 
@@ -1679,7 +1810,19 @@ function doSomething(someData) {
 
 </details>
 
-[unreleased]: https://github.com/nicoespeon/abracadabra/compare/6.16.0...HEAD
+[unreleased]: https://github.com/nicoespeon/abracadabra/compare/8.1.1...HEAD
+[8.1.1]: https://github.com/nicoespeon/abracadabra/compare/8.1.0...8.1.1
+[8.1.0]: https://github.com/nicoespeon/abracadabra/compare/8.0.1...8.1.0
+[8.0.1]: https://github.com/nicoespeon/abracadabra/compare/8.0.0...8.0.1
+[8.0.0]: https://github.com/nicoespeon/abracadabra/compare/7.1.1...8.0.0
+[7.1.1]: https://github.com/nicoespeon/abracadabra/compare/7.1.0...7.1.1
+[7.1.0]: https://github.com/nicoespeon/abracadabra/compare/7.0.0...7.1.0
+[7.0.0]: https://github.com/nicoespeon/abracadabra/compare/6.19.0...7.0.0
+[6.19.0]: https://github.com/nicoespeon/abracadabra/compare/6.18.2...6.19.0
+[6.18.2]: https://github.com/nicoespeon/abracadabra/compare/6.18.1...6.18.2
+[6.18.1]: https://github.com/nicoespeon/abracadabra/compare/6.18.0...6.18.1
+[6.18.0]: https://github.com/nicoespeon/abracadabra/compare/6.17.0...6.18.0
+[6.17.0]: https://github.com/nicoespeon/abracadabra/compare/6.16.0...6.17.0
 [6.16.0]: https://github.com/nicoespeon/abracadabra/compare/6.15.3...6.16.0
 [6.15.3]: https://github.com/nicoespeon/abracadabra/compare/6.15.2...6.15.3
 [6.15.2]: https://github.com/nicoespeon/abracadabra/compare/6.15.1...6.15.2
@@ -1766,6 +1909,7 @@ function doSomething(someData) {
 
 <!-- Demo images -->
 
+[demo-toggle-highlights]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/toggle-highlights.gif?raw=true
 [demo-extract-substring]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/extract-substring.gif?raw=true
 [demo-extract-variable-multiple-occurrences]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/extract-variable-multiple-occurrences.gif?raw=true
 [demo-merge-if-statements-else-if]: https://github.com/nicoespeon/abracadabra/blob/main/docs/demo/merge-if-statements-else-if.gif?raw=true
@@ -1777,3 +1921,4 @@ function doSomething(someData) {
 
 [guard-clause]: https://deviq.com/guard-clause/
 [adr-0008]: https://github.com/nicoespeon/abracadabra/blob/main/docs/adr/0008-don-t-propose-quick-fix-for-react-convert-to-pure-component.md
+[adr-0013]: https://github.com/nicoespeon/abracadabra/blob/main/docs/adr/0013-remove-extract-class-and-convert-to-pure-component-refactorings.md
